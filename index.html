@@ -1,15 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Coxy Wallet AI Music Contest</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <h1>Coxy Wallet AI Music Contest</h1>
-  <p>Enter with 10 ADA. Vote for your favourite song.</p>
-  <button>View Entries</button>
-  <script src="app.js"></script>
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+        content="width=device-width,initial-scale=1.0">
+      <title>AI Donation Tracker</title>  
+        <link rel="stylesheet" href="style.css">
+    </head>
+
+    <body>
+<h1>AI Donation Tracker</h1>
+<p>
+    An application for recording and tracking charity donations
+</p>
+
+<hr>
+
+<h2>Donation Summary</h2>
+<p>
+    Total Donations:
+    <strong>0</strong>
+</p>
+
+<hr>
+
+<h2>Add a donation</h2>
+<form>
+    <label for="donorName">Donor Name:</label>
+<br>
+
+<input
+
+type="text"
+id="donorName"
+name="donorName"
+placeholder="Enter donor name"
+>
+
+<br><br>
+
+<label for="amount">Donation Amount(R):</label>
+<br>
+<input
+type="number"
+id="amount"
+name="amount"
+placeholder="Enter amount"
+min="1"
+step="0.01"
+>
+
+
+
+<br><br>
+
+<button type="submit">
+    Save Donation
+</button>
+
+</form>
+
+<hr>
+
+<h2>Recent Donations</h2>
+
+<table border="1">
+
+    <thead>
+        <tr>
+         <th>Donor</th> 
+           <th>Amount</th> 
+           <th>Purpose</th> 
+           <th>Date</th> 
+        </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+            <td>Example Donor</td>
+            <td>R500.00</td>
+            <td>Food</td>
+            <td>31/08/2026</td>
+            </tr>
+
+        </tbody>
+</table>
+
+<hr>
+
+<h2>AI Donation Assistant</h2>
+
+<p>
+    Ask the AI assistant questions about donations.
+</p>
+
+<textarea
+id="question"
+rows="4"
+cols="50"
+placeholder="Example:How much has been donated?"
+></textarea>
+
+<br><br>
+
+<button type="button">
+    Ask AI
+</button>
+
+
+<hr>
+
+<h2>Cardano</h2>
+
+<p>
+    Cardano donations can be recorded and verified using
+    a Cardano transaction ID.
+</p>
+
+<label for="transactionId"></label>Cardano Transaction ID:
+</label>
+<br>
+
+<input
+type="text"
+id="transactionId"
+name="transactionId"
+placeholder="Enter transactionId"
+>
+
+<br><br>
+
+<button type="button">
+    Verify Transaction
+</button>
+    </body>
 </html>
