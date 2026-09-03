@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coxy Wallet AI Music Contest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap header-row">
+      <span class="logo">Coxy Wallet</span>
+      <nav class="nav-links">
+        <a href="#how-it-works">How it works</a>
+        <a href="#entries">Entries</a>
+      </nav>
+      <button id="wallet-btn" class="btn btn-ghost">Connect wallet</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap hero-row">
+        <div class="hero-copy">
+          <p class="kicker">AI Music Contest</p>
+          <h1>Make something no one's<br>heard before.</h1>
+          <p class="hero-sub">Submit an AI-composed track for 10 ADA, then let the community
+            decide the winner. New round closes soon &mdash; get your entry in.</p>
+          <div class="hero-actions">
+            <button id="enter-btn" class="btn btn-primary">Enter with 10 ADA</button>
+            <button id="view-entries-btn" class="btn btn-outline">Listen &amp; vote</button>
+          </div>
+          <div class="countdown" id="countdown" aria-live="polite">
+            <div class="countdown-unit"><span id="cd-days">--</span><small>days</small></div>
+            <div class="countdown-unit"><span id="cd-hours">--</span><small>hours</small></div>
+            <div class="countdown-unit"><span id="cd-mins">--</span><small>mins</small></div>
+            <div class="countdown-unit"><span id="cd-secs">--</span><small>secs</small></div>
+          </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <svg viewBox="0 0 300 300" class="blob">
+            <path fill="url(#grad)" d="M141.5,-160.5C179.6,-142.6,202.9,-97.1,210.6,-51.4C218.3,-5.6,210.4,40.4,190.2,79.6C170.1,118.8,137.7,151.2,98.6,169.9C59.5,188.6,13.6,193.6,-30.5,187.1C-74.6,180.6,-116.9,162.6,-148.3,131.9C-179.7,101.1,-200.1,57.5,-204.4,12.4C-208.7,-32.7,-197,-79.4,-169.6,-113.3C-142.3,-147.2,-99.4,-168.4,-56.6,-183.9C-13.8,-199.5,29,-209.3,71.4,-200.4C113.8,-191.4,155.8,-163.7,141.5,-160.5Z" transform="translate(150 150)" />
+            <defs>
+              <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#F4B740"/>
+                <stop offset="100%" stop-color="#FF7A59"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="note note-1">&#9835;</span>
+          <span class="note note-2">&#9833;</span>
+          <span class="note note-3">&#9834;</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="how">
+      <div class="wrap">
+        <h2>How it works</h2>
+        <ol class="steps">
+          <li class="step">
+            <span class="step-num">1</span>
+            <h3>Connect &amp; pay</h3>
+            <p>Connect your Cardano wallet and pay a 10 ADA entry fee to reserve your slot.</p>
+          </li>
+          <li class="step">
+            <span class="step-num">2</span>
+            <h3>Submit your track</h3>
+            <p>Upload your AI-generated song along with the tool you used to make it.</p>
+          </li>
+          <li class="step">
+            <span class="step-num">3</span>
+            <h3>Community votes</h3>
+            <p>Every wallet gets one vote per track. Most votes when the round closes wins the pot.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Entry submission modal, shown once a payment is confirmed -->
+    <div id="entry-modal" class="modal hidden">
+      <div class="modal-card">
+        <button id="modal-close" class="modal-close" aria-label="Close">&times;</button>
+        <h2>Submit your track</h2>
+        <p class="modal-sub">Your 10 ADA payment is confirmed. Add your track's details below.</p>
+        <form id="entry-form">
+          <label>Song title
+            <input type="text" name="title" required>
+          </label>
+          <label>AI tool used
+            <input type="text" name="ai_tool" placeholder="e.g. Suno, Udio">
+          </label>
+          <label>Description
+            <input type="text" name="description" placeholder="Optional">
+          </label>
+          <label>Email (for confirmation &amp; results)
+            <input type="email" name="email">
+          </label>
+          <label>Audio file (mp3 or wav, up to 25MB)
+            <input type="file" name="audio" accept="audio/mpeg,audio/wav" required>
+          </label>
+          <button type="submit" class="btn btn-primary" id="submit-entry-btn">Submit entry</button>
+        </form>
+      </div>
+    </div>
+
+    <section id="entries" class="entries-section">
+      <div class="wrap">
+        <div class="entries-heading">
+          <h2>This round's entries</h2>
+          <p class="entries-sub">Tap play to preview, then cast your vote.</p>
+        </div>
+        <div id="entries-list" class="entries-list">
+          <p class="entries-loading">Loading entries…</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Coxy Wallet AI Music Contest &middot; a new round starts every month.</p>
+    </div>
+  </footer>
+
+  <!-- app.js uses the Mesh SDK (loaded inside app.js as an ES module) to
+       wrap CIP-30 Cardano wallets for connecting and signing transactions -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+HOW TO SET UP THE BACKEND (PHP + SQLite + Cardano)
+====================================================
+
+This covers the full stack: PHP API, SQLite database, ADA payment
+verification, file uploads, voting, and email.
+
+------------------------------------------------
+1. FOLDER STRUCTURE
+------------------------------------------------
+  project-root/
+    index.html
+    style.css
+    app.js
+    backend/
+      config/
+        config.example.php   -> copy to config.php and fill in
+        database.php
+      includes/
+        blockfrost.php
+        mailer.php
+      api/
+        create_payment.php
+        verify_payment.php
+        upload_entry.php
+        entries.php
+        vote.php
+        send_results.php
+      schema.sql
+      data/
+        contest.db            <- your SQLite database file goes here
+      uploads/audio/           <- created automatically, must be writable
+      vendor/                  <- created by Composer (see step 4)
+
+------------------------------------------------
+2. SET UP THE SQLITE DATABASE
+------------------------------------------------
+No database server is required — SQLite is just a file. You need
+the `sqlite3` command line tool installed (or use any SQLite GUI,
+e.g. DB Browser for SQLite: https://sqlitebrowser.org).
+
+  mkdir -p backend/data
+  sqlite3 backend/data/contest.db < backend/schema.sql
+
+This creates all five tables (users, contests, entries, votes,
+transactions) and inserts one sample "active" contest round, since
+payments and entries require an active round to exist. Edit that
+row (or add your own) in the contests table to match your real
+contest's dates and title:
+
+  sqlite3 backend/data/contest.db
+  UPDATE contests SET title = 'Your Contest Name',
+    end_date = '2026-09-30 23:59:59' WHERE id = 1;
+  .quit
+
+Make sure the file is writable by your web server's user:
+  chmod 664 backend/data/contest.db
+  chmod 775 backend/data
+  chown -R www-data:www-data backend/data   (Linux, Apache/Nginx)
+
+------------------------------------------------
+3. CONFIGURE THE BACKEND
+------------------------------------------------
+  cp backend/config/config.example.php backend/config/config.php
+
+Edit backend/config/config.php and fill in:
+  - db.path                 -> should already point at
+                                backend/data/contest.db, adjust if
+                                you placed it elsewhere
+  - contest_wallet_address  -> the Cardano address that should
+                                receive the 10 ADA entry fees
+  - blockfrost_api_key      -> see step 5
+  - mail.*                  -> your SMTP provider's details
+
+IMPORTANT: config.php and data/contest.db both contain real data
+you don't want public. Never commit either to a public repository —
+add them to .gitignore. Also block direct HTTP access to backend/data/
+and backend/config/ (see step 9).
+
+------------------------------------------------
+4. INSTALL PHP DEPENDENCIES (PHPMailer + SQLite driver)
+------------------------------------------------
+From inside the backend/ folder, run:
+  composer require phpmailer/phpmailer
+
+Make sure PHP's SQLite3/PDO_SQLITE extension is enabled (it ships
+with PHP by default on most installs). Check with:
+  php -m | grep sqlite
+
+------------------------------------------------
+5. SET UP CARDANO PAYMENT VERIFICATION (Blockfrost)
+------------------------------------------------
+The backend independently checks the blockchain to confirm a payment
+really happened, rather than trusting the browser's word for it.
+
+  1. Create a free account at https://blockfrost.io
+  2. Create a new project. Choose "Mainnet" for real ADA, or
+     "Preprod" for the free Cardano testnet while you're testing.
+  3. Copy the Project ID into config.php as blockfrost_api_key.
+  4. Match blockfrost_base_url to whichever network you chose:
+       Mainnet: https://cardano-mainnet.blockfrost.io/api/v0
+       Preprod: https://cardano-preprod.blockfrost.io/api/v0
+
+While testing on Preprod, get free test ADA from the faucet:
+  https://docs.cardano.org/cardano-testnet/tools/faucet/
+
+------------------------------------------------
+6. HOW THE PAYMENT FLOW WORKS END-TO-END
+------------------------------------------------
+  1. User clicks "Connect wallet" -> app.js uses the Mesh SDK to
+     detect and connect a CIP-30 wallet extension (Nami, Eternl, etc.)
+  2. User clicks "Enter with 10 ADA" -> app.js calls
+     POST /backend/api/create_payment.php, which finds/creates the
+     user (auto-named "wallet_xxxxxx" from their address) and opens
+     a "pending" row in the transactions table. It returns the
+     contest wallet address + amount to send.
+  3. app.js uses the Mesh SDK to build a transaction sending that
+     amount from the user's wallet, asks the wallet extension to
+     sign it, and submits it. This returns a transaction hash.
+  4. app.js calls POST /backend/api/verify_payment.php with that
+     hash. The backend asks Blockfrost whether the transaction
+     really paid the expected amount to the expected address, and
+     only then marks the transaction "confirmed".
+  5. Once confirmed, the entry submission form unlocks. Uploading a
+     track calls POST /backend/api/upload_entry.php, which re-checks
+     the transaction is confirmed and not already used, then creates
+     the entry and links it back to that transaction row.
+
+Because on-chain confirmation isn't instant, app.js polls
+verify_payment.php every few seconds until it succeeds.
+
+------------------------------------------------
+7. FRONTEND WALLET LIBRARY (Mesh SDK)
+------------------------------------------------
+app.js loads the Mesh SDK directly from a CDN as an ES module:
+  import { BrowserWallet, Transaction } from "https://esm.sh/@meshsdk/core@1";
+
+No npm build step is required for this to work in the browser. If
+you later move to a bundled frontend (Vite, webpack, etc.), install
+it properly instead: npm install @meshsdk/core
+
+Users will need a Cardano wallet browser extension installed (Nami,
+Eternl, Flint, or similar) to connect and pay.
+
+------------------------------------------------
+8. FILE UPLOADS
+------------------------------------------------
+Audio files are saved to backend/uploads/audio/. Make sure that
+folder is writable by your web server's user, e.g.:
+  chmod -R 755 backend/uploads
+  chown -R www-data:www-data backend/uploads
+
+Serve that folder over HTTP so <audio> tags in the frontend can
+play the files — if backend/ sits under your web root, files are
+reachable at /backend/uploads/audio/filename.mp3. If not, add a
+rewrite rule or a small PHP script that streams the file with the
+right Content-Type header.
+
+------------------------------------------------
+9. PROTECT SENSITIVE FILES
+------------------------------------------------
+Nothing in backend/config/ or backend/data/ should be reachable
+over HTTP. If using Apache, add a .htaccess inside each folder with:
+  Deny from all
+On Nginx, add a location block denying access to those paths. Best
+practice is to move both folders outside the public web root
+entirely and update the require/path references to match.
+
+------------------------------------------------
+10. VOTING
+------------------------------------------------
+A wallet doesn't need to have paid an entry fee to vote — voting
+just needs a connected wallet, and vote.php will create a user
+record for it automatically if one doesn't exist yet. The
+UNIQUE(entry_id, user_id) constraint on the votes table blocks a
+wallet from voting twice on the same track even if the frontend
+check is bypassed.
+
+------------------------------------------------
+11. SENDING RESULTS EMAILS
+------------------------------------------------
+Confirmation emails go out automatically when an entry is submitted
+(see includes/mailer.php -> send_entry_confirmation_email()).
+
+To send final results once a contest round closes, run:
+  php backend/api/send_results.php
+
+This also marks the round as "closed" once results are sent, so
+you'll need to insert a new contests row with status = 'active'
+before the next round can accept payments and entries.
+
+Set this up as a scheduled task so it runs automatically at the
+round's end, e.g. with a cron job (Linux):
+  0 0 * * 1 php /path/to/backend/api/send_results.php
+
+------------------------------------------------
+12. TESTING CHECKLIST
+------------------------------------------------
+  [ ] Run schema.sql against a fresh contest.db and confirm all 5
+      tables exist plus one active contest row
+  [ ] Fill in config.php with real Blockfrost + SMTP + wallet address
+  [ ] Run composer require phpmailer/phpmailer
+  [ ] Confirm backend/data/ and backend/uploads/ are writable
+  [ ] Use a Preprod testnet wallet with free faucet ADA first
+  [ ] Connect wallet on the site, confirm the address shows correctly
+  [ ] Click "Enter with 10 ADA", approve the transaction in your
+      wallet extension, and confirm the entry form unlocks
+  [ ] Submit a short test audio file and confirm it appears in
+      backend/uploads/audio/ and in the entries list
+  [ ] Vote on an entry, then try voting again with the same wallet
+      and confirm it's rejected
+  [ ] Check your inbox for the entry confirmation email
+  [ ] Run send_results.php manually and confirm the results email
+      arrives, and that the contest round is marked 'closed'
