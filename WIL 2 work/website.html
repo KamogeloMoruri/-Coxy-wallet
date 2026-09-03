@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Donation Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+
+    <h1>AI Donation Tracker</h1>
+    <p class="intro">An application for recording and tracking charity donations</p>
+
+    <section id="summary">
+      <h2>Donation Summary</h2>
+      <p>Total Donations: <strong id="totalDonations">R0.00</strong></p>
+    </section>
+
+    <section id="add-donation">
+      <h2>Add a donation</h2>
+      <form>
+        <div class="field">
+          <label for="donorName">Donor Name:</label>
+          <input
+            type="text"
+            id="donorName"
+            name="donorName"
+            placeholder="Enter donor name"
+          >
+        </div>
+
+        <div class="field">
+          <label for="amount">Donation Amount (R):</label>
+          <input
+            type="number"
+            id="amount"
+            name="amount"
+            placeholder="Enter amount"
+            min="1"
+            step="0.01"
+          >
+        </div>
+
+        <div class="field">
+          <label for="purpose">Purpose:</label>
+          <select id="purpose" name="purpose">
+            <option value="">Select a purpose</option>
+            <option value="Food">Food</option>
+            <option value="Education">Education</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Shelter">Shelter</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <button type="submit">Save Donation</button>
+        <p class="status" id="donationStatus" role="status"></p>
+      </form>
+    </section>
+
+    <section id="recent-donations">
+      <h2>Recent Donations</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Donor</th>
+              <th>Amount</th>
+              <th>Purpose</th>
+              <th>Date</th>
+              <th>Cardano</th>
+            </tr>
+          </thead>
+          <tbody id="donationsTableBody">
+            <tr><td colspan="5">Loading donations…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="ai-assistant">
+      <h2>AI Donation Assistant</h2>
+      <p>Ask the AI assistant questions about donations.</p>
+
+      <div class="field">
+        <label for="question">Your question:</label>
+        <textarea
+          id="question"
+          rows="4"
+          placeholder="Example: How much has been donated?"
+        ></textarea>
+      </div>
+
+      <button type="button" id="askAiBtn">Ask AI</button>
+      <p class="status" id="aiAnswer" role="status"></p>
+    </section>
+
+    <section id="cardano">
+      <h2>Cardano</h2>
+      <p>Donate ADA directly from your wallet, or verify a Cardano transaction ID you already sent.</p>
+
+      <div class="field">
+        <button type="button" id="connectWalletBtn">Connect Wallet</button>
+        <p class="status" id="walletStatus" role="status">No wallet connected.</p>
+      </div>
+
+      <div class="field">
+        <label for="adaAmount">Donation Amount (ADA):</label>
+        <input
+          type="number"
+          id="adaAmount"
+          name="adaAmount"
+          placeholder="Enter ADA amount"
+          min="1"
+          step="0.1"
+        >
+      </div>
+
+      <button type="button" id="donateAdaBtn">Donate with ADA</button>
+      <p class="status" id="adaDonationStatus" role="status"></p>
+
+      <hr>
+
+      <div class="field">
+        <label for="transactionId">Cardano Transaction ID:</label>
+        <input
+          type="text"
+          id="transactionId"
+          name="transactionId"
+          placeholder="Enter transaction ID"
+        >
+      </div>
+
+      <button type="button" id="verifyTxBtn">Verify Transaction</button>
+      <p class="status" id="verifyStatus" role="status"></p>
+    </section>
+
+  </div>
+
+  <!-- Cardano serialization library, required by cardano/offchain.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@emurgo/cardano-serialization-lib-browser@11.5.0/cardano_serialization_lib.js"></script>
+  <script src="cardano/offchain.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
